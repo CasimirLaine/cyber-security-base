@@ -1,0 +1,134 @@
+LINK: link to the repository
+
+To install the application, follow the steps below:
+
+Clone the Repository:
+git clone <repository-url>
+cd <repository-directory>
+
+Create a Virtual Environment:
+python -m venv venv
+
+To activate the virtual environment, follow the steps below:
+Windows:
+venv\Scripts\activate
+Linux/Mac:
+source venv/bin/activate
+
+Install Dependencies:
+pip install -r requirements.txt
+
+To run the application, follow the steps below:
+python app.py
+
+Note: The application will run on port 5000 by default.
+
+To access the application, open a browser and go to the following URL:
+http://127.0.0.1:5000/
+
+The application should be running, and you can access it through the specified URL.
+
+The views are:
+
+/login
+To login to the application with security flaws.
+
+/login_fixed
+To log in to the application with security fixes.
+
+/profile/<user_id>
+To view the profile of a user with security flaws.
+
+/profile_fixed/<user_id>
+To view the profile of a user with security fixes.
+
+/logout
+To logout of the application.
+
+Login with the following credentials:
+
+username: admin
+password: adminpass
+
+username: user1
+password: user1pass
+
+username: user2
+password: user2pass
+
+https://owasp.org/www-project-top-ten/
+
+FLAW 1: A03:2021–Injection
+exact source link pinpointing flaw 1...
+
+The _login_func-function uses string formatting to construct a SQL query, which could be susceptible to SQL injection attacks.
+Attackers might manipulate the input parameters to execute arbitrary SQL commands.
+For example:
+curl --request POST 'http://127.0.0.1:5000/login?username=admin%27OR%271%27%3D%271%27--&password=anything'
+Running this command will log in as the admin user without knowing the password.
+
+Use parameterized queries or an ORM (Object-Relational Mapping) system like SQLAlchemy to safely interact with the database.
+Parameterized queries ensure that user input is treated as data and not executable code.
+ORMs provide an abstraction layer that translates Python code into SQL queries.
+The login_fixed-function uses SQLAlchemy to safely interact with the database.
+For example:
+curl --request POST 'http://127.0.0.1:5000/login_fixed?username=admin%27OR%271%27%3D%271%27--&password=anything'
+Running this command will not log in as the admin user since the input is escaped properly.
+
+FLAW 2: A02:2021-Cryptographic Failures
+exact source link pinpointing flaw 2...
+
+Storing passwords in a clear-text format within the database is a security risk.
+Clear-text storage makes it easier for attackers to compromise user accounts if they gain access to the database.
+
+Hash the passwords before storing them in the database.
+Then store that hash value in the database.
+When the user logs in, hash the password they entered and compare it to the hash value stored in the database.
+Hashing is a one-way process, so the original password cannot be recovered from the hash value.
+Hashing the password with a salt value adds an extra layer of security.
+Avoid using MD5 or SHA1 for password hashing, as they are not designed for this purpose and can be cracked easily.
+Instead, use a strong, adaptive hashing algorithm like bcrypt or Argon2.
+The fixed code makes use of passlib library which is suitable for password hashing.
+
+FLAW 3: A01:2021-Broken Access Control
+exact source link pinpointing flaw 5...
+
+The code does not perform adequate access control checks when accessing user profiles.
+The profile-route allows users to access profiles other than their own without proper authorization.
+It first checks whether the user is logged in, but it does not check whether the user is authorized to access the requested profile.
+
+Implement proper access control mechanisms.
+Ensure that users can only access their own profiles unless they have the necessary privileges to do so.
+Flask-Login provides the current_user object, which you can use to check user ownership.
+This fix is implemented in the profile_fixed-route.
+
+FLAW 4: A04:2021-Insecure Design
+exact source link pinpointing flaw 5...
+
+Sending passwords in the query string (/login route) is insecure.
+Query strings are often logged, making it easier for attackers to intercept sensitive information.
+In addition, query strings are often stored in browser history and in the address bar, which could expose sensitive information to other users of the same computer.
+
+Use the HTTP POST method for sensitive data like passwords.
+Passwords should be sent in the request body instead of the query string.
+The request body is not logged by default.
+The format of the request body can be specified using the Content-Type header.
+It is common to use JSON, XML or form data.
+Modify the login form to submit data securely through the request body.
+This helps prevent sensitive information from being exposed.
+The login_fixed endpoint sends the password in the request body instead of the query string
+
+FLAW 5: A05:2021-Security Misconfiguration
+exact source link pinpointing flaw 5...
+
+The profile-endpoint will first check whether the user is logged in.
+Then it will check whether the user requested exists.
+If the user does not exist, it will tell the user profile requested does not exist and redirect to the login page.
+If the user does exist, it will render the profile page.
+This allows attackers to enumerate existing user accounts.
+Attackers can use this information to perform other attacks, such as brute force attacks.
+
+Implement a generic error message for login failures to avoid disclosing information about existing user accounts.
+Provide minimal feedback to users to prevent enumeration attacks.
+The fixed code does not disclose whether the user exists or not.
+Instead, it will always redirect to the login page if the user is not logged in and the logged-in user does not match the requested profile.

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+<h2>Login</h2>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li style="color: {% if 'danger' in message %}red{% else %}green{% endif %};">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+<form id="loginForm" method="post" action="{{ url_for('login') }}">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="button" onclick="submitForm()">Login</button>
+</form>
+
+
+<script>
+    function submitForm() {
+        var form = document.getElementById('loginForm');
+        var username = form.elements['username'].value;
+        var password = form.elements['password'].value;
+
+        // Append the values as query parameters to the action URL
+        var actionUrl = form.action + "?username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password);
+
+        // Update the form action
+        form.action = actionUrl;
+
+        // Submit the form
+        form.submit();
+    }
+</script>
+</body>
+</html>
