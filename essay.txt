@@ -1,10 +1,10 @@
-LINK: link to the repository
+LINK: https://github.com/CasimirLaine/cyber-security-base/tree/master
 
 To install the application, follow the steps below:
 
 Clone the Repository:
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/CasimirLaine/cyber-security-base.git
+cd cyber-security-base
 
 Create a Virtual Environment:
 python -m venv venv
@@ -59,13 +59,19 @@ password: user2pass
 https://owasp.org/www-project-top-ten/
 
 FLAW 1: A03:2021–Injection
-exact source link pinpointing flaw 1...
+https://github.com/CasimirLaine/cyber-security-base/blob/21cc07c9393320cadee4f4d6786efb29da41b5a5/app.py#L51
 
 The _login_func-function uses string formatting to construct a SQL query, which could be susceptible to SQL injection attacks.
 Attackers might manipulate the input parameters to execute arbitrary SQL commands.
 For example:
 curl --request POST 'http://127.0.0.1:5000/login?username=admin%27OR%271%27%3D%271%27--&password=anything'
 Running this command will log in as the admin user without knowing the password.
+This is because the SQL query will be constructed as follows:
+SELECT * FROM users WHERE username = 'admin' OR '1' = '1' --' AND password = 'anything'
+The double dash (--) is used to comment out the rest of the query, so the password check is ignored.
+The query will return the first user with the username admin, which is the admin user.
+The password check is ignored because '1' = '1' is always true.
+This can also be used to enumerate existing user accounts or to perform other attacks on the database.
 
 Use parameterized queries or an ORM (Object-Relational Mapping) system like SQLAlchemy to safely interact with the database.
 Parameterized queries ensure that user input is treated as data and not executable code.
@@ -76,10 +82,12 @@ curl --request POST 'http://127.0.0.1:5000/login_fixed?username=admin%27OR%271%2
 Running this command will not log in as the admin user since the input is escaped properly.
 
 FLAW 2: A02:2021-Cryptographic Failures
-exact source link pinpointing flaw 2...
+https://github.com/CasimirLaine/cyber-security-base/blob/21cc07c9393320cadee4f4d6786efb29da41b5a5/app.py#L23C1-L23C1
 
 Storing passwords in a clear-text format within the database is a security risk.
 Clear-text storage makes it easier for attackers to compromise user accounts if they gain access to the database.
+Even if the password is not exposed outside the application, it can still be exposed to internal users with database access.
+The database can also be leaked or stolen, exposing all user passwords in clear-text that can be used to compromise other accounts.
 
 Hash the passwords before storing them in the database.
 Then store that hash value in the database.
@@ -91,11 +99,12 @@ Instead, use a strong, adaptive hashing algorithm like bcrypt or Argon2.
 The fixed code makes use of passlib library which is suitable for password hashing.
 
 FLAW 3: A01:2021-Broken Access Control
-exact source link pinpointing flaw 5...
+https://github.com/CasimirLaine/cyber-security-base/blob/21cc07c9393320cadee4f4d6786efb29da41b5a5/app.py#L96C2-L96C2
 
 The code does not perform adequate access control checks when accessing user profiles.
 The profile-route allows users to access profiles other than their own without proper authorization.
 It first checks whether the user is logged in, but it does not check whether the user is authorized to access the requested profile.
+This allows attackers to access other users' profiles by simply changing the user ID in the URL.
 
 Implement proper access control mechanisms.
 Ensure that users can only access their own profiles unless they have the necessary privileges to do so.
@@ -103,9 +112,10 @@ Flask-Login provides the current_user object, which you can use to check user ow
 This fix is implemented in the profile_fixed-route.
 
 FLAW 4: A04:2021-Insecure Design
-exact source link pinpointing flaw 5...
+https://github.com/CasimirLaine/cyber-security-base/blob/21cc07c9393320cadee4f4d6786efb29da41b5a5/app.py#L50C2-L50C2
 
-Sending passwords in the query string (/login route) is insecure.
+The login route sends the password in the query string, which is insecure.
+The query string is the part of the URL after the question mark (?).
 Query strings are often logged, making it easier for attackers to intercept sensitive information.
 In addition, query strings are often stored in browser history and in the address bar, which could expose sensitive information to other users of the same computer.
 
@@ -119,7 +129,7 @@ This helps prevent sensitive information from being exposed.
 The login_fixed endpoint sends the password in the request body instead of the query string
 
 FLAW 5: A05:2021-Security Misconfiguration
-exact source link pinpointing flaw 5...
+https://github.com/CasimirLaine/cyber-security-base/blob/21cc07c9393320cadee4f4d6786efb29da41b5a5/app.py#L98C6-L98C6
 
 The profile-endpoint will first check whether the user is logged in.
 Then it will check whether the user requested exists.
